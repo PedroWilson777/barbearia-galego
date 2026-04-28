@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0c0c0e;
+  --bg-2: #131316;
+  --surface: #17171b;
+  --surface-2: #1d1d22;
+  --surface-3: #25252b;
+  --border: #2a2a31;
+  --border-2: #35353e;
+  --text: #f2ece1;
+  --text-2: #a39d92;
+  --text-3: #6b665e;
+  --text-4: #44413c;
+  --accent: #d4a574;
+  --accent-2: #e8c089;
+  --accent-glow: rgba(212, 165, 116, 0.18);
+  --ai: #8ea3d4;
+  --ai-glow: rgba(142, 163, 212, 0.18);
+  --human: #c79b6f;
+  --success: #7eb89a;
+  --warning: #e0a868;
+  --danger: #d4827e;
+  --danger-glow: rgba(212, 130, 126, 0.15);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  overflow: hidden;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-2); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes typing {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+.font-display { font-family: 'Fraunces', Georgia, serif; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+.animate-pulse-soft { animation: pulse 2s ease-in-out infinite; }
+.animate-fade-up { animation: fadeUp 0.4s ease-out; }
+.animate-msg-in { animation: msgIn 0.3s ease-out; }
+
+/* Toast slide-in animation */
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in {
+  animation: slide-in 0.25s ease-out;
+}

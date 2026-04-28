@@ -1,0 +1,193 @@
+// Schema do banco de dados - ATENDIMENTO IA
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ConversationStatus {
+  AI_ACTIVE
+  HUMAN_ACTIVE
+  WAITING_HUMAN
+  RESOLVED
+}
+
+enum LeadQualification {
+  HOT
+  WARM
+  COLD
+  UNKNOWN
+}
+
+enum MessageSender {
+  CLIENT
+  AI
+  HUMAN
+}
+
+enum AppointmentStatus {
+  PENDING_CONFIRMATION
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULING
+}
+
+enum NotificationSeverity {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum NotificationType {
+  ESCALATION
+  CONFIRMATION_FAILED
+  RESCHEDULE_REQUEST
+  REPEATED_NO_SHOW
+  PAYMENT_ISSUE
+  AI_COMPLETED
+  CUSTOM
+}
+
+model FunnelStage {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String   @default("#d4a574")
+  order     Int      @default(0)
+  icon      String   @default("circle")
+  leads     Lead[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lead {
+  id               String            @id @default(cuid())
+  phone            String            @unique
+  name             String?
+  email            String?
+  qualification    LeadQualification @default(UNKNOWN)
+  score            Int               @default(0)
+  notes            String?           @db.Text
+  totalVisits      Int               @default(0)
+  lastVisitAt      DateTime?
+  preferredBarber  String?
+  preferredService String?
+  blocked          Boolean           @default(false)
+  funnelStageId    String?
+  funnelStage      FunnelStage?      @relation(fields: [funnelStageId], references: [id], onDelete: SetNull)
+  conversations    Conversation[]
+  appointments     Appointment[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([phone])
+  @@index([qualification])
+  @@index([funnelStageId])
+}
+
+model Conversation {
+  id            String             @id @default(cuid())
+  leadId        String
+  lead          Lead               @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  status        ConversationStatus @default(AI_ACTIVE)
+  assignedHuman String?
+  lastMessageAt DateTime           @default(now())
+  unreadCount   Int                @default(0)
+  resolvedAt    DateTime?
+  messages      Message[]
+  notifications SupervisorNotification[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([status])
+  @@index([lastMessageAt])
+  @@index([leadId])
+}
+
+model Message {
+  id                String        @id @default(cuid())
+  conversationId    String
+  conversation      Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender            MessageSender
+  content           String        @db.Text
+  authorName        String?
+  whatsappMessageId String?       @unique
+  metaTags          Json?
+  createdAt         DateTime      @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([whatsappMessageId])
+}
+
+model Barber {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  active       Boolean       @default(true)
+  workingDays  String        @default("1,2,3,4,5,6")
+  startHour    Int           @default(8)
+  endHour      Int           @default(21)
+  color        String        @default("#d4a574")
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Service {
+  id              String        @id @default(cuid())
+  name            String        @unique
+  priceInCents    Int
+  durationMinutes Int           @default(45)
+  active          Boolean       @default(true)
+  appointments    Appointment[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Appointment {
+  id                 String            @id @default(cuid())
+  leadId             String
+  lead               Lead              @relation(fields: [leadId], references: [id])
+  barberId           String
+  barber             Barber            @relation(fields: [barberId], references: [id])
+  serviceId          String
+  service            Service           @relation(fields: [serviceId], references: [id])
+  scheduledAt        DateTime
+  status             AppointmentStatus @default(PENDING_CONFIRMATION)
+  notes              String?           @db.Text
+  confirmationSentAt DateTime?
+  confirmedAt        DateTime?
+  reminderSentAt     DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([scheduledAt, status])
+  @@index([barberId, scheduledAt])
+  @@index([leadId])
+}
+
+model SupervisorNotification {
+  id             String               @id @default(cuid())
+  conversationId String?
+  conversation   Conversation?        @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  type           NotificationType
+  severity       NotificationSeverity @default(MEDIUM)
+  title          String
+  detail         String               @db.Text
+  read           Boolean              @default(false)
+  resolvedAt     DateTime?
+  createdAt      DateTime             @default(now())
+
+  @@index([read, createdAt])
+  @@index([severity])
+}
+
+model BarbershopSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
